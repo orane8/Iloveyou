@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>For Deagerjohne (Mami) 💖</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Special+Elite&display=swap" rel="stylesheet">
+
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #ffd1dc, #ffe6f0);
+  font-family: 'Special Elite', cursive;
+  overflow-x: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 40px 20px;
+  position: relative;
+  transition: background 1.2s ease, color 1.2s ease;
+}
+
+body.night {
+  background: radial-gradient(circle at top, #1a1a2e, #0f0f1a 70%);
+  color: white;
+}
+
+.floating-hearts {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+/* Soft floating emoji hearts */
+.bg-heart {
+  position: absolute;
+  opacity: 0.22;
+  filter: blur(0.2px);
+  animation: bgFloat linear infinite;
+  will-change: transform, opacity;
+  transform: translate3d(0,0,0);
+}
+
+@keyframes bgFloat {
+  0%   { transform: translate3d(0, 110vh, 0) scale(1); opacity: 0; }
+  15%  { opacity: 0.25; }
+  50%  { transform: translate3d(30px, 50vh, 0) scale(1.12); }
+  100% { transform: translate3d(-30px, -15vh, 0) scale(1.20); opacity: 0; }
+}
+
+/* Stars */
+.star {
+  position: fixed;
+  border-radius: 50%;
+  background: white;
+  opacity: 0.0;
+  animation: twinkle infinite alternate;
+  z-index: 1;
+  will-change: opacity;
+}
+
+@keyframes twinkle {
+  from { opacity: 0.12; }
+  to   { opacity: 1; }
+}
+
+/* Classic floating pink hearts (shape hearts) */
+.heart {
+  position: fixed;
+  width: 20px;
+  height: 20px;
+  background: #ff4d6d;
+  transform: rotate(45deg) translate3d(0,0,0);
+  animation: floatUp 8s linear infinite;
+  opacity: 0.55;
+  z-index: 0;
+  will-change: transform, opacity;
+}
+
+.heart::before,
+.heart::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: #ff4d6d;
+  border-radius: 50%;
+}
+
+.heart::before { top: -10px; left: 0; }
+.heart::after { left: -10px; top: 0; }
+
+@keyframes floatUp {
+  0%   { transform: translate3d(0,110vh,0) rotate(45deg); opacity: 0; }
+  20%  { opacity: 0.65; }
+  100% { transform: translate3d(0,-15vh,0) rotate(45deg); opacity: 0; }
+}
+
+/* Letter */
+.letter {
+  background: #fffaf0;
+  padding: 50px;
+  width: 100%;
+  max-width: 750px;
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+  text-align: center;
+  position: relative;
+  z-index: 2;
+  transition: background 1.2s ease, color 1.2s ease, box-shadow 1.2s ease;
+}
+
+body.night .letter {
+  background: rgba(255,255,255,0.08);
+  color: white;
+  box-shadow: 0 0 60px rgba(255,105,180,0.35);
+}
+
+h1 {
+  font-family: 'Dancing Script', cursive;
+  font-size: 2.5rem;
+  color: #ff3366;
+  margin-bottom: 20px;
+  transition: color 1.2s ease;
+}
+body.night h1 { color: #ff99cc; }
+
+.content {
+  font-size: 1.1rem;
+  line-height: 1.85;
+  min-height: 200px;
+  white-space: pre-line;
+}
+
+.question {
+  margin-top: 40px;
+  font-family: 'Dancing Script', cursive;
+  font-size: 1.7rem;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.question.answered {
+  opacity: 0.55;
+  transform: translateY(-4px);
+}
+
+.answer-area {
+  margin-top: 18px;
+  min-height: 140px;
+  display: grid;
+  place-items: center;
+  gap: 12px;
+}
+
+.buttons { position: relative; min-height: 60px; }
+
+button {
+  padding: 12px 25px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  margin: 10px;
+  transition: transform 0.25s ease, background 0.25s ease, opacity 0.25s ease;
+  user-select: none;
+}
+
+#yesBtn { background-color: #ff3366; color: white; }
+#yesBtn:disabled { opacity: 0.85; cursor: default; }
+
+#noBtn {
+  background-color: #aaa;
+  color: white;
+  position: relative;
+  will-change: transform;
+}
+
+/* Answer Card */
+.answer-card {
+  width: min(520px, 92%);
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 18px;
+  padding: 18px 18px 16px;
+  box-shadow: 0 16px 35px rgba(0,0,0,0.18);
+  border: 2px solid rgba(255, 51, 102, 0.25);
+  display: none;
+  position: relative;
+  overflow: hidden;
+  transform: translateY(10px);
+  opacity: 0;
+  transition: transform 0.6s ease, opacity 0.6s ease, background 1s ease;
+}
+
+body.night .answer-card {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,153,204,0.25);
+}
+
+.answer-card.show {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.answer-title {
+  font-family: 'Dancing Script', cursive;
+  font-size: 1.9rem;
+  color: #ff3366;
+}
+body.night .answer-title { color: #ff99cc; }
+
+.answer-text { margin-top: 6px; font-size: 1.05rem; opacity: 0.95; }
+
+.answer-footer {
+  margin-top: 10px;
+  font-family: 'Dancing Script', cursive;
+  font-size: 1.25rem;
+  color: #ff3366;
+}
+body.night .answer-footer { color: #ff99cc; }
+
+/* Stamp */
+.stamp {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  transform: rotate(-14deg) scale(0.6);
+  transform-origin: center;
+  padding: 10px 14px;
+  border: 3px dashed rgba(255, 51, 102, 0.75);
+  border-radius: 12px;
+  color: rgba(255, 51, 102, 0.9);
+  font-family: 'Special Elite', cursive;
+  letter-spacing: 2px;
+  font-size: 1.05rem;
+  background: rgba(255, 255, 255, 0.6);
+  opacity: 0;
+}
+body.night .stamp {
+  border-color: rgba(255, 153, 204, 0.8);
+  color: rgba(255, 153, 204, 0.95);
+  background: rgba(0,0,0,0.25);
+}
+.stamp.stamp-in { animation: stampBounce 650ms cubic-bezier(.17,.89,.32,1.49) forwards; }
+@keyframes stampBounce {
+  0%   { opacity: 0; transform: rotate(-14deg) scale(2.4); filter: blur(1px); }
+  55%  { opacity: 1; transform: rotate(-14deg) scale(0.95); filter: blur(0); }
+  72%  { opacity: 1; transform: rotate(-14deg) scale(1.10); }
+  86%  { opacity: 1; transform: rotate(-14deg) scale(0.98); }
+  100% { opacity: 1; transform: rotate(-14deg) scale(1); }
+}
+
+/* Pop hearts from YES */
+.pop-heart {
+  position: fixed;
+  z-index: 999;
+  font-size: 18px;
+  pointer-events: none;
+  animation: pop 900ms cubic-bezier(.17,.89,.32,1.49) forwards;
+  will-change: transform, opacity;
+  transform: translate3d(0,0,0);
+}
+@keyframes pop {
+  0%   { transform: translate3d(0,0,0) scale(0.9); opacity: 1; }
+  100% { transform: translate3d(var(--dx), var(--dy), 0) scale(1.8); opacity: 0; }
+}
+
+/* Falling confetti */
+.confetti-heart {
+  position: fixed;
+  font-size: 22px;
+  z-index: 999;
+  animation: confettiFall linear forwards;
+  will-change: transform, opacity;
+  transform: translate3d(0,0,0);
+}
+@keyframes confettiFall {
+  0%   { transform: translate3d(0,-10vh,0) rotate(0deg); opacity: 1; }
+  100% { transform: translate3d(0,110vh,0) rotate(360deg); opacity: 0; }
+}
+
+/* Explosion */
+.explosion-heart {
+  position: fixed;
+  font-size: 25px;
+  animation: explode 1s ease-out forwards;
+  z-index: 999;
+  will-change: transform, opacity;
+  transform: translate3d(0,0,0);
+}
+@keyframes explode {
+  to { transform: translate3d(var(--x), var(--y), 0) scale(2); opacity: 0; }
+}
+</style>
+</head>
+
+<body>
+<div class="floating-hearts" id="floatingHearts"></div>
+
+<audio id="bgMusic" loop>
+  <source src="https://www.bensound.com/bensound-music/bensound-romantic.mp3" type="audio/mp3">
+</audio>
+
+<div class="letter">
+  <h1>My Dearest Deagerjohne (Mami) 💕</h1>
+  <div class="content" id="letterText"></div>
+
+  <div class="question" id="questionText">Do you love me? 💖</div>
+
+  <div class="answer-area">
+    <div class="buttons" id="buttonWrap">
+      <button id="yesBtn">Yes ❤️</button>
+      <button id="noBtn">No 🙈</button>
+    </div>
+
+    <div class="answer-card" id="answerCard">
+      <div class="stamp" id="stamp">MINE 💗</div>
+      <div class="answer-title">You chose: YES ❤️</div>
+      <div class="answer-text">I knew you’d say yes… as always 💖</div>
+      <div class="answer-footer">— Orane 💌</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- Typewriter ---------- */
+const text = `My beautiful Deagerjohne, my sweet Mami,
+
+From the very first moment you stepped into my life, something changed inside me.
+You became my warmth, my peace, and my greatest happiness.
+
+Mami, you are the smile I look for every morning and the thought I carry every night.
+Your laughter makes my world brighter, and your love makes me stronger.
+
+You make ordinary days feel special.
+You make hard days feel lighter.
+You make my life feel more complete just by being in it.
+
+I promise to cherish you, protect your heart, and stand beside you through every season of life.
+You are not just someone I love, you are my person, my always, my comfort.
+
+With all my heart,
+Orane 💌`;
+
+let twIndex = 0;
+function typeWriter() {
+  const el = document.getElementById("letterText");
+  if (twIndex < text.length) {
+    el.innerHTML += text.charAt(twIndex);
+    twIndex++;
+    setTimeout(typeWriter, 35);
+  }
+}
+typeWriter();
+
+/* ---------- Background floating emoji hearts (slow + calm) ---------- */
+const floatingHearts = document.getElementById("floatingHearts");
+setInterval(() => {
+  const h = document.createElement("div");
+  h.className = "bg-heart";
+  h.textContent = Math.random() > 0.5 ? "💗" : "💞";
+  h.style.left = Math.random() * 100 + "vw";
+  h.style.fontSize = (Math.random() * 22 + 14) + "px";
+  h.style.animationDuration = (Math.random() * 12 + 14) + "s";
+  floatingHearts.appendChild(h);
+  setTimeout(() => h.remove(), 28000);
+}, 1100);
+
+/* ---------- Floating shape hearts ---------- */
+setInterval(() => {
+  const heart = document.createElement("div");
+  heart.classList.add("heart");
+  heart.style.left = Math.random() * 100 + "vw";
+  heart.style.opacity = (Math.random() * 0.35 + 0.25).toFixed(2);
+  heart.style.animationDuration = (Math.random() * 4 + 7) + "s";
+  document.body.appendChild(heart);
+  setTimeout(() => heart.remove(), 12000);
+}, 550);
+
+/* ---------- No runs + Yes grows + No returns ---------- */
+const noBtn = document.getElementById("noBtn");
+const yesBtn = document.getElementById("yesBtn");
+const buttonWrap = document.getElementById("buttonWrap");
+
+let yesScale = 1;
+let noResetTimer = null;
+
+noBtn.addEventListener("mouseover", () => {
+  noBtn.style.transform = `translate(${Math.random()*220-110}px, ${Math.random()*120-60}px)`;
+  yesScale = Math.min(yesScale + 0.08, 2.2);
+  yesBtn.style.transform = `scale(${yesScale})`;
+
+  if (noResetTimer) clearTimeout(noResetTimer);
+  noResetTimer = setTimeout(() => {
+    noBtn.style.transform = "translate(0, 0)";
+  }, 650);
+});
+
+/* ---------- Performance helpers: batch DOM work ---------- */
+function spawnInBatches(total, batchSize, makeOne, done) {
+  let created = 0;
+  function step() {
+    const frag = document.createDocumentFragment();
+    const count = Math.min(batchSize, total - created);
+    for (let i = 0; i < count; i++) frag.appendChild(makeOne());
+    document.body.appendChild(frag);
+    created += count;
+    if (created < total) requestAnimationFrame(step);
+    else done && done();
+  }
+  requestAnimationFrame(step);
+}
+
+/* ---------- Stars (more twinkle, batched) ---------- */
+let starsMade = false;
+function createStarsBatched(count = 300) {
+  if (starsMade) return;
+  starsMade = true;
+
+  spawnInBatches(
+    count,
+    60,
+    () => {
+      const star = document.createElement("div");
+      star.className = "star";
+      const size = Math.random() * 2.8 + 0.8;
+      star.style.width = size + "px";
+      star.style.height = size + "px";
+      star.style.top = Math.random() * 100 + "vh";
+      star.style.left = Math.random() * 100 + "vw";
+      star.style.animationDuration = (Math.random() * 3.5 + 1.0) + "s";
+      star.style.animationDelay = (Math.random() * 3.5) + "s";
+      return star;
+    }
+  );
+}
+
+/* ---------- Falling confetti (batched) ---------- */
+function confettiBatched(amount = 110) {
+  spawnInBatches(
+    amount,
+    35,
+    () => {
+      const c = document.createElement("div");
+      c.className = "confetti-heart";
+      c.textContent = Math.random() > 0.5 ? "❤️" : "💖";
+      c.style.left = Math.random() * 100 + "vw";
+      c.style.fontSize = (Math.random() * 22 + 14) + "px";
+      c.style.animationDuration = (Math.random() * 2.2 + 3.0) + "s";
+      setTimeout(() => c.remove(), 6500);
+      return c;
+    }
+  );
+}
+
+/* ---------- Explosion hearts (batched) ---------- */
+function explosionBatched(amount = 36) {
+  spawnInBatches(
+    amount,
+    18,
+    () => {
+      const heart = document.createElement("div");
+      heart.className = "explosion-heart";
+      heart.textContent = "💖";
+      heart.style.left = "50%";
+      heart.style.top = "50%";
+      heart.style.setProperty("--x", (Math.random() * 520 - 260) + "px");
+      heart.style.setProperty("--y", (Math.random() * 520 - 260) + "px");
+      setTimeout(() => heart.remove(), 1100);
+      return heart;
+    }
+  );
+}
+
+/* ---------- Pop hearts from Yes button (batched) ---------- */
+function popFromElementBatched(el, amount = 22) {
+  const rect = el.getBoundingClientRect();
+  const originX = rect.left + rect.width / 2;
+  const originY = rect.top + rect.height / 2;
+
+  spawnInBatches(
+    amount,
+    12,
+    () => {
+      const h = document.createElement("div");
+      h.className = "pop-heart";
+      h.textContent = Math.random() > 0.5 ? "💖" : "❤️";
+      h.style.left = originX + "px";
+      h.style.top = originY + "px";
+
+      const dx = (Math.random() * 260 - 130);
+      const dy = (Math.random() * -240 - 40);
+      h.style.setProperty("--dx", dx + "px");
+      h.style.setProperty("--dy", dy + "px");
+      h.style.fontSize = (Math.random() * 14 + 16) + "px";
+
+      setTimeout(() => h.remove(), 1000);
+      return h;
+    }
+  );
+}
+
+/* ---------- YES click (instant UI first, effects later) ---------- */
+let answered = false;
+
+yesBtn.addEventListener("click", () => {
+  if (answered) return;
+  answered = true;
+  yesBtn.disabled = true;
+
+  // ✅ Make UI update IMMEDIATELY (no lag)
+  document.body.classList.add("night");
+  document.getElementById("questionText").classList.add("answered");
+  buttonWrap.style.display = "none";
+
+  const card = document.getElementById("answerCard");
+  const stamp = document.getElementById("stamp");
+  card.classList.add("show");
+  stamp.classList.add("stamp-in");
+
+  // ✅ Start music safely (don’t block UI)
+  const music = document.getElementById("bgMusic");
+  try {
+    const p = music.play();
+    if (p && typeof p.catch === "function") p.catch(() => {});
+  } catch (e) {}
+
+  // ✅ Defer heavy effects by a frame (prevents click lag)
+  requestAnimationFrame(() => {
+    popFromElementBatched(yesBtn, 24);
+    createStarsBatched(320);
+    explosionBatched(40);
+    confettiBatched(130);
+  });
+});
+</script>
+
+</body>
+</html>
