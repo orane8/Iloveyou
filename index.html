@@ -179,7 +179,6 @@ body.night h1{ color: var(--pink2); }
   gap: 10px;
 }
 
-/* iPhone-friendly buttons */
 button{
   padding: 12px 22px;
   font-size: 1rem;
@@ -279,6 +278,33 @@ body.night .stamp{
   100% { opacity:1; transform: rotate(-14deg) scale(1); }
 }
 
+/* Music Controls (hidden until YES) */
+.music-controls{
+  display:none;
+  margin-top: 12px;
+  width:min(520px, 92%);
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 51, 102, 0.22);
+  background: rgba(255,255,255,0.72);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+}
+body.night .music-controls{
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,153,204,0.22);
+}
+.music-controls.show{ display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap; }
+.music-controls label{ font-family:'Dancing Script', cursive; font-size:1.15rem; opacity:0.95; }
+.music-controls input[type="range"]{ width:min(260px, 80vw); }
+.music-btn{
+  padding:10px 14px;
+  border-radius: 999px;
+  border:none;
+  cursor:pointer;
+  background: rgba(255, 51, 102, 0.9);
+  color:white;
+}
+
 /* Pop hearts from YES */
 .pop-heart{
   position:fixed;
@@ -357,6 +383,13 @@ body.night .stamp{
       <div class="answer-text">I knew you’d say yes… as always 💖</div>
       <div class="answer-footer">— Orane 💌</div>
     </div>
+
+    <!-- music controls -->
+    <div class="music-controls" id="musicControls">
+      <button class="music-btn" id="muteBtn" type="button">Mute 🔇</button>
+      <label for="volRange">Music</label>
+      <input id="volRange" type="range" min="0" max="0.30" step="0.01" value="0.12" />
+    </div>
   </div>
 </div>
 
@@ -395,10 +428,10 @@ typeWriter();
 const isSmallScreen = window.matchMedia("(max-width: 430px)").matches;
 const BG_HEART_INTERVAL = isSmallScreen ? 1400 : 1100;
 const SHAPE_HEART_INTERVAL = isSmallScreen ? 700 : 550;
-const STAR_COUNT = isSmallScreen ? 220 : 340;
-const CONFETTI_COUNT = isSmallScreen ? 90 : 140;
-const EXPLODE_COUNT = isSmallScreen ? 28 : 46;
-const POP_COUNT = isSmallScreen ? 18 : 26;
+const STAR_COUNT = isSmallScreen ? 200 : 320;
+const CONFETTI_COUNT = isSmallScreen ? 80 : 120;
+const EXPLODE_COUNT = isSmallScreen ? 26 : 40;
+const POP_COUNT = isSmallScreen ? 16 : 22;
 
 /* ---------- Background floating emoji hearts ---------- */
 const floatingHearts = document.getElementById("floatingHearts");
@@ -440,7 +473,7 @@ noBtn.addEventListener("mouseover", () => {
 
   noBtn.style.transform = `translate(${dx}px, ${dy}px)`;
 
-  yesScale = Math.min(yesScale + 0.08, 2.1);
+  yesScale = Math.min(yesScale + 0.08, 2.05);
   yesBtn.style.transform = `scale(${yesScale})`;
 
   if (noResetTimer) clearTimeout(noResetTimer);
@@ -531,52 +564,87 @@ function popFromElementBatched(el, amount){
   });
 }
 
-/* ---------- Music helper: ultra-soft + peak-controlled ---------- */
+/* ---------- Music: compressor + adjustable gain (audible) ---------- */
 let audioCtx, sourceNode, gainNode, compressorNode;
+let musicStarted = false;
 
-function playMusicSoft(){
+function ensureAudioGraph(){
   const music = document.getElementById("bgMusic");
+  if (audioCtx) return;
 
-  // ✅ SUPER quiet target volume (try 0.03–0.07)
-  const target = 0.05;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  sourceNode = audioCtx.createMediaElementSource(music);
 
-  if (!audioCtx) {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    sourceNode = audioCtx.createMediaElementSource(music);
+  compressorNode = audioCtx.createDynamicsCompressor();
+  compressorNode.threshold.value = -26;
+  compressorNode.knee.value = 28;
+  compressorNode.ratio.value = 6;
+  compressorNode.attack.value = 0.02;
+  compressorNode.release.value = 0.25;
 
-    compressorNode = audioCtx.createDynamicsCompressor();
-    compressorNode.threshold.value = -28;
-    compressorNode.knee.value = 30;
-    compressorNode.ratio.value = 8;
-    compressorNode.attack.value = 0.02;
-    compressorNode.release.value = 0.25;
+  gainNode = audioCtx.createGain();
+  gainNode.gain.value = 0.0;
 
-    gainNode = audioCtx.createGain();
-    gainNode.gain.value = 0.0;
+  sourceNode.connect(compressorNode);
+  compressorNode.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+}
 
-    sourceNode.connect(compressorNode);
-    compressorNode.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-  }
+function playMusicSoft(target=0.12){
+  const music = document.getElementById("bgMusic");
+  ensureAudioGraph();
 
-  if (audioCtx.state === "suspended") {
-    audioCtx.resume().catch(()=>{});
-  }
+  if (audioCtx.state === "suspended") audioCtx.resume().catch(()=>{});
 
-  // element volume stays 1; we control real loudness with gain
-  music.volume = 1;
+  music.volume = 1; // keep element at 1; control loudness with gain
   gainNode.gain.value = 0;
 
-  try {
-    const p = music.play();
-    if (p && typeof p.catch === "function") p.catch(() => {});
-  } catch(e){}
+  if (!musicStarted){
+    musicStarted = true;
+    try{
+      const p = music.play();
+      if (p && typeof p.catch === "function") p.catch(()=>{});
+    }catch(e){}
+  }
 
   const now = audioCtx.currentTime;
   gainNode.gain.cancelScheduledValues(now);
   gainNode.gain.setValueAtTime(gainNode.gain.value, now);
-  gainNode.gain.linearRampToValueAtTime(target, now + 2.0);
+  gainNode.gain.linearRampToValueAtTime(target, now + 1.8);
 }
+
+/* Music controls */
+const controls = document.getElementById("musicControls");
+const volRange = document.getElementById("volRange");
+const muteBtn = document.getElementById("muteBtn");
+let muted = false;
+
+function setVolume(v){
+  ensureAudioGraph();
+  const now = audioCtx.currentTime;
+  gainNode.gain.cancelScheduledValues(now);
+  gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+  gainNode.gain.linearRampToValueAtTime(v, now + 0.25);
+}
+
+volRange.addEventListener("input", () => {
+  if (!audioCtx) return;
+  muted = false;
+  muteBtn.textContent = "Mute 🔇";
+  setVolume(parseFloat(volRange.value));
+});
+
+muteBtn.addEventListener("click", () => {
+  if (!audioCtx) return;
+  muted = !muted;
+  if (muted){
+    muteBtn.textContent = "Unmute 🔊";
+    setVolume(0);
+  } else {
+    muteBtn.textContent = "Mute 🔇";
+    setVolume(parseFloat(volRange.value));
+  }
+});
 
 /* YES click */
 let answered = false;
@@ -585,7 +653,6 @@ yesBtn.addEventListener("click", () => {
   answered = true;
   yesBtn.disabled = true;
 
-  // instant UI first
   document.body.classList.add("night");
   document.getElementById("questionText").classList.add("answered");
   buttonWrap.style.display = "none";
@@ -595,10 +662,10 @@ yesBtn.addEventListener("click", () => {
   card.classList.add("show");
   stamp.classList.add("stamp-in");
 
-  // ✅ ultra-soft music
-  playMusicSoft();
+  // show music controls + start at slider value (audible)
+  controls.classList.add("show");
+  playMusicSoft(parseFloat(volRange.value));
 
-  // effects next frame (no lag)
   requestAnimationFrame(() => {
     popFromElementBatched(yesBtn, POP_COUNT);
     createStarsBatched(STAR_COUNT);
