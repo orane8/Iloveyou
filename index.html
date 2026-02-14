@@ -278,7 +278,7 @@ body.night .stamp{
   100% { opacity:1; transform: rotate(-14deg) scale(1); }
 }
 
-/* Music Controls (hidden until YES) */
+/* Music Controls */
 .music-controls{
   display:none;
   margin-top: 12px;
@@ -293,8 +293,18 @@ body.night .music-controls{
   background: rgba(255,255,255,0.08);
   border-color: rgba(255,153,204,0.22);
 }
-.music-controls.show{ display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap; }
-.music-controls label{ font-family:'Dancing Script', cursive; font-size:1.15rem; opacity:0.95; }
+.music-controls.show{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+.music-controls label{
+  font-family:'Dancing Script', cursive;
+  font-size:1.15rem;
+  opacity:0.95;
+}
 .music-controls input[type="range"]{ width:min(260px, 80vw); }
 .music-btn{
   padding:10px 14px;
@@ -346,7 +356,6 @@ body.night .music-controls{
   to{ transform: translate3d(var(--x), var(--y), 0) scale(2); opacity:0; }
 }
 
-/* Extra small screens */
 @media (max-width: 380px){
   .letter{ border-radius: 16px; }
   .content{ line-height: 1.85; }
@@ -384,7 +393,6 @@ body.night .music-controls{
       <div class="answer-footer">— Orane 💌</div>
     </div>
 
-    <!-- music controls -->
     <div class="music-controls" id="musicControls">
       <button class="music-btn" id="muteBtn" type="button">Mute 🔇</button>
       <label for="volRange">Music</label>
@@ -496,7 +504,6 @@ function spawnInBatches(total, batchSize, makeOne){
   requestAnimationFrame(step);
 }
 
-/* Stars */
 let starsMade = false;
 function createStarsBatched(count){
   if (starsMade) return;
@@ -515,7 +522,6 @@ function createStarsBatched(count){
   });
 }
 
-/* Confetti */
 function confettiBatched(amount){
   spawnInBatches(amount, 30, () => {
     const c = document.createElement("div");
@@ -529,7 +535,6 @@ function confettiBatched(amount){
   });
 }
 
-/* Explosion */
 function explosionBatched(amount){
   spawnInBatches(amount, 18, () => {
     const e = document.createElement("div");
@@ -544,7 +549,6 @@ function explosionBatched(amount){
   });
 }
 
-/* Pop hearts from Yes */
 function popFromElementBatched(el, amount){
   const r = el.getBoundingClientRect();
   const ox = r.left + r.width/2;
@@ -564,7 +568,7 @@ function popFromElementBatched(el, amount){
   });
 }
 
-/* ---------- Music: compressor + adjustable gain (audible) ---------- */
+/* ---------- MUSIC (fixed controls) ---------- */
 let audioCtx, sourceNode, gainNode, compressorNode;
 let musicStarted = false;
 
@@ -590,52 +594,75 @@ function ensureAudioGraph(){
   gainNode.connect(audioCtx.destination);
 }
 
-function playMusicSoft(target=0.12){
+function startOrResumeMusic(){
   const music = document.getElementById("bgMusic");
   ensureAudioGraph();
 
-  if (audioCtx.state === "suspended") audioCtx.resume().catch(()=>{});
-
-  music.volume = 1; // keep element at 1; control loudness with gain
-  gainNode.gain.value = 0;
-
-  if (!musicStarted){
-    musicStarted = true;
-    try{
-      const p = music.play();
-      if (p && typeof p.catch === "function") p.catch(()=>{});
-    }catch(e){}
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume().catch(()=>{});
   }
 
-  const now = audioCtx.currentTime;
-  gainNode.gain.cancelScheduledValues(now);
-  gainNode.gain.setValueAtTime(gainNode.gain.value, now);
-  gainNode.gain.linearRampToValueAtTime(target, now + 1.8);
+  // try to start playback again (important for iPhone)
+  if (!musicStarted) {
+    musicStarted = true;
+    try {
+      const p = music.play();
+      if (p && typeof p.catch === "function") p.catch(() => { musicStarted = false; });
+    } catch(e) {
+      musicStarted = false;
+    }
+  } else {
+    // if it paused for any reason, try again
+    if (music.paused) {
+      try {
+        const p = music.play();
+        if (p && typeof p.catch === "function") p.catch(()=>{});
+      } catch(e){}
+    }
+  }
 }
-
-/* Music controls */
-const controls = document.getElementById("musicControls");
-const volRange = document.getElementById("volRange");
-const muteBtn = document.getElementById("muteBtn");
-let muted = false;
 
 function setVolume(v){
   ensureAudioGraph();
   const now = audioCtx.currentTime;
   gainNode.gain.cancelScheduledValues(now);
   gainNode.gain.setValueAtTime(gainNode.gain.value, now);
-  gainNode.gain.linearRampToValueAtTime(v, now + 0.25);
+  gainNode.gain.linearRampToValueAtTime(v, now + 0.2);
 }
 
+function fadeTo(v, seconds=1.2){
+  ensureAudioGraph();
+  const now = audioCtx.currentTime;
+  gainNode.gain.cancelScheduledValues(now);
+  gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+  gainNode.gain.linearRampToValueAtTime(v, now + seconds);
+}
+
+function playMusicSoft(target=0.12){
+  const music = document.getElementById("bgMusic");
+  music.volume = 1; // element volume stays 1; we control with gain
+
+  startOrResumeMusic();
+  ensureAudioGraph();
+  setVolume(0);
+  fadeTo(target, 1.6);
+}
+
+/* Controls */
+const controls = document.getElementById("musicControls");
+const volRange = document.getElementById("volRange");
+const muteBtn = document.getElementById("muteBtn");
+let muted = false;
+
 volRange.addEventListener("input", () => {
-  if (!audioCtx) return;
+  startOrResumeMusic(); // ✅ key fix: slider starts music if needed
   muted = false;
   muteBtn.textContent = "Mute 🔇";
   setVolume(parseFloat(volRange.value));
 });
 
 muteBtn.addEventListener("click", () => {
-  if (!audioCtx) return;
+  startOrResumeMusic(); // ✅ key fix: button starts/resumes music if needed
   muted = !muted;
   if (muted){
     muteBtn.textContent = "Unmute 🔊";
@@ -662,7 +689,7 @@ yesBtn.addEventListener("click", () => {
   card.classList.add("show");
   stamp.classList.add("stamp-in");
 
-  // show music controls + start at slider value (audible)
+  // show controls + start music
   controls.classList.add("show");
   playMusicSoft(parseFloat(volRange.value));
 
