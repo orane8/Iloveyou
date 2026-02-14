@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -15,7 +15,6 @@
   --pink2:#ff99cc;
   --paper:#fffaf0;
 
-  /* Responsive sizing */
   --padX: clamp(16px, 4vw, 50px);
   --padY: clamp(18px, 5vw, 50px);
   --title: clamp(2.05rem, 6vw, 2.6rem);
@@ -187,6 +186,7 @@ button{
   border:none;
   border-radius: 999px;
   cursor:pointer;
+  margin: 10px;
   transition: transform .25s ease, opacity .25s ease;
   user-select:none;
   -webkit-tap-highlight-color: transparent;
@@ -436,7 +436,6 @@ let noResetTimer = null;
 function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
 
 noBtn.addEventListener("mouseover", () => {
-  // keep movement reasonable on small screens
   const dx = clamp(Math.random()*220 - 110, -90, 90);
   const dy = clamp(Math.random()*120 - 60, -45, 45);
 
@@ -533,6 +532,32 @@ function popFromElementBatched(el, amount){
   });
 }
 
+/* ---------- Music volume fix: start quiet + fade in ---------- */
+function playMusicSoft(){
+  const music = document.getElementById("bgMusic");
+  if (!music) return;
+
+  // start very quiet
+  music.volume = 0.0;
+
+  try {
+    const p = music.play();
+    if (p && typeof p.catch === "function") p.catch(() => {});
+  } catch(e){}
+
+  // fade to comfortable level
+  const target = 0.16;   // final volume (adjust 0.12–0.20)
+  const step = 0.012;    // fade speed
+  const interval = 140;  // ms
+
+  let v = 0;
+  const fade = setInterval(() => {
+    v = Math.min(target, v + step);
+    music.volume = v;
+    if (v >= target) clearInterval(fade);
+  }, interval);
+}
+
 /* YES click */
 let answered = false;
 yesBtn.addEventListener("click", () => {
@@ -550,12 +575,8 @@ yesBtn.addEventListener("click", () => {
   card.classList.add("show");
   stamp.classList.add("stamp-in");
 
-  // safe music play
-  const music = document.getElementById("bgMusic");
-  try {
-    const p = music.play();
-    if (p && typeof p.catch === "function") p.catch(() => {});
-  } catch(e){}
+  // play music softly (fixed)
+  playMusicSoft();
 
   // effects next frame (no lag)
   requestAnimationFrame(() => {
