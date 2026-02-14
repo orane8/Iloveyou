@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -186,7 +186,6 @@ button{
   border:none;
   border-radius: 999px;
   cursor:pointer;
-  margin: 10px;
   transition: transform .25s ease, opacity .25s ease;
   user-select:none;
   -webkit-tap-highlight-color: transparent;
@@ -532,30 +531,51 @@ function popFromElementBatched(el, amount){
   });
 }
 
-/* ---------- Music volume fix: start quiet + fade in ---------- */
+/* ---------- Music helper: ultra-soft + peak-controlled ---------- */
+let audioCtx, sourceNode, gainNode, compressorNode;
+
 function playMusicSoft(){
   const music = document.getElementById("bgMusic");
-  if (!music) return;
 
-  // start very quiet
-  music.volume = 0.0;
+  // ✅ SUPER quiet target volume (try 0.03–0.07)
+  const target = 0.05;
+
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    sourceNode = audioCtx.createMediaElementSource(music);
+
+    compressorNode = audioCtx.createDynamicsCompressor();
+    compressorNode.threshold.value = -28;
+    compressorNode.knee.value = 30;
+    compressorNode.ratio.value = 8;
+    compressorNode.attack.value = 0.02;
+    compressorNode.release.value = 0.25;
+
+    gainNode = audioCtx.createGain();
+    gainNode.gain.value = 0.0;
+
+    sourceNode.connect(compressorNode);
+    compressorNode.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+  }
+
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume().catch(()=>{});
+  }
+
+  // element volume stays 1; we control real loudness with gain
+  music.volume = 1;
+  gainNode.gain.value = 0;
 
   try {
     const p = music.play();
     if (p && typeof p.catch === "function") p.catch(() => {});
   } catch(e){}
 
-  // fade to comfortable level
-  const target = 0.16;   // final volume (adjust 0.12–0.20)
-  const step = 0.012;    // fade speed
-  const interval = 140;  // ms
-
-  let v = 0;
-  const fade = setInterval(() => {
-    v = Math.min(target, v + step);
-    music.volume = v;
-    if (v >= target) clearInterval(fade);
-  }, interval);
+  const now = audioCtx.currentTime;
+  gainNode.gain.cancelScheduledValues(now);
+  gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+  gainNode.gain.linearRampToValueAtTime(target, now + 2.0);
 }
 
 /* YES click */
@@ -575,7 +595,7 @@ yesBtn.addEventListener("click", () => {
   card.classList.add("show");
   stamp.classList.add("stamp-in");
 
-  // play music softly (fixed)
+  // ✅ ultra-soft music
   playMusicSoft();
 
   // effects next frame (no lag)
